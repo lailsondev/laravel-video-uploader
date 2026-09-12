@@ -7,6 +7,8 @@
   import TextArea from "@/components/ui/textarea/Textarea.vue";
   import InputError from "@/components/InputError.vue";
   import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select/";
+  import { Button } from "@/components/ui/button";
+  import ContentController from "@/actions/App/Http/Controllers/Media/ContentController";
 
   const form = useForm({
       title: null,
@@ -16,19 +18,23 @@
   });
 
   const optionsType = [
-      { label: 'Filme', value: 'MOVIE' },
-      { label: 'Serie', value: 'SERIE' }
+      { label: "Filme", value: "MOVIE" },
+      { label: "Série", value: "SERIE" }
   ];
+
+  const createContent = () => {
+      form.post(ContentController.store.url())
+  }
 
   defineOptions({
       layout: {
           breadcrumbs: [
               {
-                  title: 'Conteudos',
+                  title: "Conteúdos",
                   href: contentsIndex()
               },
               {
-                  title: 'Criar Conteudos',
+                  title: "Criar Conteúdos",
                   href: contentsCreate()
               },
           ],
@@ -37,12 +43,12 @@
 </script>
 
 <template>
-    <Head title="Criar Conteudo" />
+    <Head title="Criar Conteúdo" />
 
     <div class="p-2 w-full">
-        <form action="">
+        <form v-on:submit.prevent="createContent">
             <div class="w-full mb-6">
-                <InputLabel for="title">Titulo</InputLabel>
+                <InputLabel for="title">Título</InputLabel>
                 <Input
                     id="title"
                     class="mt-2"
@@ -50,11 +56,11 @@
                     v-model="form.title"
                     required
                     autofocus />
-                <InputError />
+                <InputError :message="form.errors.title" />
             </div>
 
             <div class="w-full mb-6">
-                <InputLabel for="description">Descricao</InputLabel>
+                <InputLabel for="description">Descrição</InputLabel>
                 <Input
                     id="description"
                     class="mt-2"
@@ -62,33 +68,30 @@
                     v-model="form.description"
                     required
                     autofocus />
-                <InputError />
+                <InputError :message="form.errors.description" />
             </div>
 
             <div class="w-full mb-6">
-                <InputLabel for="body">Conteudo</InputLabel>
+                <InputLabel for="body">Conteúdo</InputLabel>
                 <TextArea
                     id="body"
                     class="mt-2"
-                    type="text"
                     v-model="form.body"
                     required
                     autofocus />
-                <InputError />
+                <InputError :message="form.errors.body" />
             </div>
 
             <div class="w-full mb-6">
-                <InputLabel for="type" class="mb-4">Tipo Conteudo</InputLabel>
+                <InputLabel for="type" class="mb-4">Tipo Conteúdo</InputLabel>
                 <Select
                     id="type"
                     class="mt-2"
-                    type="text"
                     v-model="form.type"
                     required
-                    autofocus >
-
+                >
                     <SelectTrigger>
-                        <SelectValue placeholder="Selecione um tipo do conteudo."/>
+                        <SelectValue placeholder="Selecione um tipo do conteúdo."/>
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem
@@ -100,8 +103,15 @@
                         </SelectItem>
                     </SelectContent>
                 </Select>
-                <InputError />
+                <InputError :message="form.errors.type" />
             </div>
+
+            <Button
+                type="submit"
+                class="mt-8"
+                variant="secondary"
+                :class="{'opacity-25': form.processing}"
+                :disabled="form.processing">Criar Conteúdo</Button>
         </form>
     </div>
 </template>

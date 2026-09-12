@@ -20,14 +20,14 @@ defineProps({
 defineOptions({
     layout: {
         breadcrumbs: [
-            { title: 'Meus Conteudos', href: contentsIndex() },
+            { title: "Meus Conteúdos", href: contentsIndex() },
         ],
     },
 });
 </script>
 
 <template>
-    <Head title="Meus Conteudos" />
+    <Head title="Meus Conteúdos" />
 
     <Table>
         <TableHeader>
@@ -56,8 +56,5 @@ defineOptions({
         </TableBody>
     </Table>
 
-    <Pagination :links="contents.links" v-if="contents?.links" />
-    <pre v-if="!contents?.links" class="p-4 bg-red-900 text-white text-xs">{{ JSON.stringify(contents, null, 2) }}</pre>
+    <Pagination :links="contents.links" v-if="contents?.last_page > 1" />
 </template>
-
-

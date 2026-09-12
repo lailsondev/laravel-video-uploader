@@ -37,9 +37,15 @@ class ContentController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(ContentRequest $request)
     {
-        //
+        $data = $request->validated();
+        $data['code'] = str()->uuid();
+        $data['slug'] = str($data['title'])->slug();
+
+        $this->content->create($data);
+
+        return redirect()->route('media.contents.index')->with('success', 'Content created successfully.');
     }
 
     /**

@@ -24,7 +24,6 @@ class ContentRequest extends FormRequest
     {
         return [
             'title' => 'required',
-            'code' => 'required',
             'description' => 'nullable|string|min:10',
             'body' => 'required',
             'type' => 'required',
