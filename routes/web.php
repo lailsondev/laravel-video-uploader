@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Media\ContentController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
@@ -9,3 +10,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+Route::prefix('media')
+    ->name('media.')
+    ->middleware('auth')
+    ->group(function () {
+        Route::resource('contents', ContentController::class);
+    });
