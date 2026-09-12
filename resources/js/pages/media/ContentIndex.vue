@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { Head } from "@inertiajs/vue3";
 import { dashboard } from "@/routes";
 import { index as contentsIndex } from "@/routes/media/contents";
@@ -7,9 +7,7 @@ import Pagination from "@/components/videoupload/Pagination.vue";
 import {
     Table,
     TableBody,
-    TableCaption,
     TableCell,
-    TableFooter,
     TableHead,
     TableHeader,
     TableRow,
@@ -22,7 +20,6 @@ defineProps({
 defineOptions({
     layout: {
         breadcrumbs: [
-            { title: 'Dashboard', href: dashboard() },
             { title: 'Meus Conteudos', href: contentsIndex() },
         ],
     },

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Media;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Media\ContentRequest;
 use App\Models\Content;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -30,7 +31,7 @@ class ContentController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('media/ContentCreate');
     }
 
     /**
@@ -73,3 +74,4 @@ class ContentController extends Controller
         //
     }
 }
+
