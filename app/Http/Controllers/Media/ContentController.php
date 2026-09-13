@@ -41,7 +41,7 @@ class ContentController extends Controller
     {
         $data = $request->validated();
         $data['code'] = str()->uuid();
-        $data['slug'] = str($data['title'])->slug();
+        $data['cover'] = $data['cover']?->store('contents', 'public');
 
         $this->content->create($data);
 
