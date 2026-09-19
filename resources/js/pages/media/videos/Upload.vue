@@ -1,44 +1,140 @@
 <script setup lang="ts">
-import InputError from '@/components/InputError.vue';
-import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
 import InputLabel from '@/components/ui/label/Label.vue';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/vue3';
-
+import {Head, usePage, router, useForm} from '@inertiajs/vue3';
 
 import { ref } from 'vue';
+import axios from "axios";
+import VideosController from "@/actions/App/Http/Controllers/Media/VideosController";
+import VideoItem from "@/components/videoupload/VideoItem.vue";
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Dashboard',
-        href: '',
-    },
-    {
-        title: 'Conteúdos',
-        href: '',
-    },
-    {
-        title: 'Criar Conteúdo',
-        href: '',
-    },
-];
-
-const isDragged = ref(false);
+const props = defineProps({
+    content: Object,
+});
 
 const form = useForm({
     name: '',
     description: '',
 });
 
-const handleDropVideos = (e) => {
-    console.log(e.dataTransfer.files);
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: '' },
+    { title: 'Conteúdos', href: '' },
+    { title: 'Criar Conteúdo', href: '' },
+];
+
+const isDragged = ref(false);
+
+const findVideoById = (id: string | number) => {
+    return videosList.value.find((v: any) => String(v.id) === String(id));
+}
+
+const videosList = ref<any[]>([]);
+
+const mainHandleVideos = (videos: any) => {
+    Array.from(videos as FileList).forEach((video: any) => {
+        axios.post(`/media/contents/${props.content.id}/videos/upload`, {name: video.name})
+            .then(response => {
+                const videoPayload: any = {
+                    id: response.data.id,
+                    name: response.data.name,
+                    uploading: true,
+                    uploadProgress: 0,
+                    paused: false,
+                    _file: video,
+                    _params: { video: response.data.id, content: props.content.id },
+                    _abort: null as any,
+                };
+
+                videosList.value.unshift(videoPayload);
+
+                chunkUploadAxios(video, { video: response.data.id, content: props.content.id });
+            });
+    });
 };
 
-const handleInputVideos = (e) => {
-    console.log(e.target.files);
+const chunkUploadAxios = async (file: File, params: { video: any, content: any }) => {
+    const chunkSize = 1024 * 1024; // 1MB
+    const total = file.size;
+    let start = 0;
+    const url = VideosController.processChunck({content: params.content, video: params.video}).url;
+    const csrf = (usePage().props as any).csrf_token;
+
+    while (start < total) {
+        const item: any = findVideoById(params.video);
+        if (!item) break;
+
+        while (item.paused) {
+            await new Promise(r => setTimeout(r, 300));
+            if (!findVideoById(params.video)) return;
+        }
+
+        const end = Math.min(start + chunkSize, total) - 1;
+        const chunk = file.slice(start, end + 1);
+        const formData = new FormData();
+        formData.append('file', chunk, file.name);
+
+        const controller = new AbortController();
+        item._abort = controller;
+
+        try {
+            await axios.post(url, formData, {
+                headers: {
+                    'Content-Range': `bytes ${start}-${end}/${total}`,
+                    'X-CSRF-TOKEN': csrf,
+                },
+                signal: controller.signal as any,
+            });
+            start = end + 1;
+            const progress = Math.round((start / total) * 100);
+            const target: any = findVideoById(params.video);
+            if (target) target.uploadProgress = progress;
+            if (start >= total && target) {
+                target.uploading = false;
+                target.uploadProgress = 100;
+            }
+        } catch (e: any) {
+            if (axios.isCancel(e)) {
+                const cur: any = findVideoById(params.video);
+
+                if (cur?.paused) {
+                    while (cur.paused) {
+                        await new Promise(r => setTimeout(r, 300));
+                        if (!findVideoById(params.video)) return;
+                    }
+                    continue;
+                }
+                return;
+            }
+            await new Promise(r => setTimeout(r, 800));
+        }
+    }
+};
+
+const pauseUpload = (videoId: any) => {
+    const v: any = findVideoById(videoId);
+    if (!v) return;
+    v.paused = true;
+    v._abort?.abort();
+};
+const resumeUpload = (videoId: any) => {
+    const v: any = findVideoById(videoId);
+    if (!v) return;
+    v.paused = false;
+};
+const cancelUpload = (videoId: any) => {
+    const v: any = findVideoById(videoId);
+    if (v) v._abort?.abort();
+    router.delete(VideosController.destroy({content: props.content.id, video: videoId}).url, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+            videosList.value = videosList.value.filter((video: any) => String(video.id) !== String(videoId));
+        }
+    } as any);
 };
 
 </script>
@@ -52,7 +148,7 @@ const handleInputVideos = (e) => {
                 <InputLabel
                     @dragover.prevent="isDragged = true"
                     @dragleave.prevent="isDragged = false"
-                    @drop.prevent="handleDropVideos"
+                    @drop.prevent="mainHandleVideos($event.dataTransfer.files)"
                     for="photos"
                     class="bg-black-700 flex h-28 w-full items-center justify-center rounded border-2 border-dashed border-white"
                     :class="{
@@ -61,82 +157,21 @@ const handleInputVideos = (e) => {
                 >Clique ou arraste seus vídeos para realizar o upload</InputLabel
                 >
 
-                <Input id="photos" type="file" class="sr-only" @change="handleInputVideos"/>
+                <Input id="photos" type="file" class="sr-only" @change="mainHandleVideos(($event.target as any).files)"/>
             </div>
+
             <div>
-
-                <div class="p-6 text-gray-900" v-for="line of [...Array(5).keys()]" :key="line">
-                    <div class="flex space-x-6">
-
-                        <div class="w-full max-w-[350px] space-y-3">
-                            <div class="h-[180px] w-full">
-                                <img src="https://placeholdit.com/320x180/dddddd/999999" class="h-[180px] w-full rounded bg-white p-1 shadow" />
-                            </div>
-                            <!-- Encoding Status -->
-                            <div class="space-y-1">
-                                <div class="h-3 overflow-hidden rounded bg-gray-100 shadow-inner">
-                                    <div
-                                        class="h-full bg-green-500"
-                                        style="width: 65%"
-                                    ></div>
-                                </div>
-                                <div class="text-sm font-bold text-white">Convertendo vídeo</div>
-                            </div>
-                            <!-- Encoding Status -->
-
-                            <!-- Uploading Status -->
-                            <div class="space-y-1">
-                                <div class="h-3 overflow-hidden rounded bg-gray-100 shadow-inner">
-                                    <div
-                                        class="h-full bg-blue-500"
-                                        style="width: 45%"
-                                    ></div>
-                                </div>
-                                <div class="text-sm font-bold text-white">Enviando Vídeo</div>
-                            </div>
-                            <!-- Uploading Status -->
-
-                            <div class="flex items-center space-x-3">
-                                <!-- Disparar os eventos -->
-                                <button class="text-sm font-medium text-blue-500" >Pausar</button>
-                                <button class="text-sm font-medium text-blue-500" >Continuar</button>
-                                <button class="text-sm font-medium text-blue-500" >Cancelar</button>
-                            </div>
-                        </div>
-
-                        <form @submit.prevent="() => {}" class="flex-grow space-y-6">
-                            <div>
-                                <InputLabel for="title" class="text-white">Nome Vídeo</InputLabel>
-
-                                <Input id="title" type="text" v-model="form.name" required autofocus class="text-white" />
-
-                                <InputError class="mt-2" :message="form.errors.name" />
-                            </div>
-
-                            <div class="mt-4">
-                                <InputLabel for="description" class="text-white">Descrição</InputLabel>
-
-                                <Input
-                                    id="description"
-                                    type="text"
-                                    class="mt-1 block w-full p-2 text-white"
-                                    v-model="form.description"
-                                    required
-                                    autofocus
-                                    autocomplete=""
-                                />
-
-                                <InputError class="mt-2" :message="form.errors.description" />
-                            </div>
-
-                            <div class="mt-8">
-                                <Button variant="secondary"> Atualizar </Button>
-                                <span class="font-thin text-white">Atualizado...</span>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <VideoItem
+                    v-for="video of videosList"
+                    :key="video.id"
+                    :video="video"
+                    :content="content.id"
+                    @resume="resumeUpload"
+                    @pause="pauseUpload"
+                    @cancel="cancelUpload"
+                />
             </div>
+
         </div>
     </AppLayout>
 </template>

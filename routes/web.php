@@ -20,4 +20,16 @@ Route::prefix('media')
 
         Route::get('/contents/{content}/videos/upload', [VideosController::class, 'index'])
             ->name('contets.videos.upload');
+
+        Route::post('/contents/{content}/videos/upload', [VideosController::class, 'store'])
+            ->name('contets.videos.upload.store');
+
+        Route::patch('/contents/{content}/videos/{video}', [VideosController::class, 'update'])
+            ->name('contets.videos.upload.update');
+
+        Route::delete('/contents/{content}/videos/{video}/destroy', [VideosController::class, 'destroy'])
+            ->name('contets.videos.upload.destroy');
+
+        Route::any('/contents/{content}/videos/{video}/process/chunck', [VideosController::class, 'processChunck'])
+            ->name('contets.videos.upload.process.chunck');
     });
