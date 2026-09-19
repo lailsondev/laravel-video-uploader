@@ -61,7 +61,9 @@ class ContentController extends Controller
      */
     public function edit(string $id)
     {
-        $content = $this->content->findOrFail($id);
+        $content = $this->content->findOrFail($id, [
+            'id', 'title', 'cover', 'description', 'body', 'type',
+        ]);
 
         return Inertia::render('media/ContentEdit', compact('content'));
     }

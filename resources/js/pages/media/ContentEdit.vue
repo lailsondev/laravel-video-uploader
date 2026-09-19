@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { index as contentsIndex } from "@/routes/media/contents";
 import { create as contentsCreate } from "@/routes/media/contents";
-import {Head, useForm, usePage} from "@inertiajs/vue3";
+import {Head, useForm, usePage, router} from "@inertiajs/vue3";
 import InputLabel from "@/components/ui/label/Label.vue";
 import { Input } from "@/components/ui/input";
 import TextArea from "@/components/ui/textarea/Textarea.vue";
@@ -22,8 +22,14 @@ const optionsType = [
     { label: "Série", value: "SERIE" }
 ];
 
-const createContent = () => {
-    form.post(ContentController.store.url())
+const updateContent = () => {
+    const data = {
+        _token: usePage().props.csrf_token,
+        _method: 'PUT',
+        ...form.data()
+    };
+
+    router.post(ContentController.update(form.id), data);
 }
 
 const isDragged = ref(false);
@@ -75,7 +81,7 @@ defineOptions({
     <Head title="Atualizar Conteúdo" />
 
     <div class="p-2 w-full">
-        <form v-on:submit.prevent="createContent" novalidate>
+        <form v-on:submit.prevent="updateContent" novalidate>
             <div class="w-full mb-6">
                 <InputLabel for="title">Título</InputLabel>
                 <Input
