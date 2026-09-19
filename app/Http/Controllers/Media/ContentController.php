@@ -86,6 +86,8 @@ class ContentController extends Controller
         }
 
         $content->update($data);
+
+        return redirect()->back()->with('success', 'Content updated successfully.');
     }
 
     /**
@@ -93,6 +95,17 @@ class ContentController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $content = $this->content->findOrFail($id);
+
+        if ($content->cover) {
+            $disk = Storage::disk('public');
+            if ($disk->exists($content->cover)) {
+                $disk->delete($content->cover);
+            }
+        }
+
+        $content->delete();
+
+        return redirect()->back();
     }
 }

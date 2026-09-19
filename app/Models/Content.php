@@ -15,4 +15,11 @@ class Content extends Model
     use HasFactory, Sluggable;
 
     protected string $slugColumnFrom = 'title';
+
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'datetime:d/m/Y H:i',
+        ];
+    }
 }

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { Head } from "@inertiajs/vue3";
-import { dashboard } from "@/routes";
+import { Head, useForm } from "@inertiajs/vue3";
 import { index as contentsIndex } from "@/routes/media/contents";
 import Pagination from "@/components/videoupload/Pagination.vue";
 
@@ -12,10 +11,21 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
+import TextLink from "@/components/TextLink.vue";
+import ContentController from "@/actions/App/Http/Controllers/Media/ContentController";
+import {Pencil, Trash} from '@lucide/vue'
 
-defineProps({
+const props = defineProps({
     contents: Object,
 });
+
+const form = useForm({});
+
+const removeContent = (content: string) => {
+    if (!confirm('Deseja mesmo remover este conteúdo?')) return;
+
+    form.delete(ContentController.destroy(content));
+}
 
 defineOptions({
     layout: {
@@ -37,7 +47,7 @@ defineOptions({
                 </TableHead>
                 <TableHead>Conteúdo</TableHead>
                 <TableHead>Criado em</TableHead>
-                <TableHead class="text-right">
+                <TableHead>
                     Ações
                 </TableHead>
             </TableRow>
@@ -49,8 +59,18 @@ defineOptions({
                 </TableCell>
                 <TableCell>{{ content.title }}</TableCell>
                 <TableCell>{{ content.created_at }}</TableCell>
-                <TableCell class="text-right">
+                <TableCell class="flex gap-x-2">
+                    <TextLink :href="ContentController.edit({content: content.id})"
+                              class="no-underline rounded px-4 py-2 bg-blue-700 border border-blue-900 text-white font-bold mb-2"
+                    >
+                        <Pencil />
+                    </TextLink>
 
+                    <TextLink @click.prevent="removeContent(content.id)"
+                              class="no-underline rounded px-4 py-2 bg-red-700 border border-red-900 text-white font-bold mb-2"
+                    >
+                        <Trash />
+                    </TextLink>
                 </TableCell>
             </TableRow>
         </TableBody>
