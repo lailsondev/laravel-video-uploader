@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Media\ContentController;
+use App\Http\Controllers\Media\VideosController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
@@ -16,4 +17,7 @@ Route::prefix('media')
     ->middleware('auth')
     ->group(function () {
         Route::resource('contents', ContentController::class);
+
+        Route::get('/contents/{content}/videos/upload', [VideosController::class, 'index'])
+            ->name('contets.videos.upload');
     });

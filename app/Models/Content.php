@@ -7,6 +7,7 @@ use Database\Factories\ContentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['title', 'description', 'code', 'body', 'type', 'slug', 'cover'])]
 class Content extends Model
@@ -21,5 +22,10 @@ class Content extends Model
         return [
             'created_at' => 'datetime:d/m/Y H:i',
         ];
+    }
+
+    public function videos(): HasMany
+    {
+        return $this->hasMany(Video::class);
     }
 }
