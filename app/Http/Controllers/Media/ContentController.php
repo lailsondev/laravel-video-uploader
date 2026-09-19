@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Media;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Media\ContentRequest;
 use App\Models\Content;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ContentController extends Controller
@@ -61,15 +61,29 @@ class ContentController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $content = $this->content->findOrFail($id);
+
+        return Inertia::render('media/ContentEdit', compact('content'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(ContentRequest $request, string $id)
     {
-        //
+        $data = $request->validated();
+        $content = $this->content->findOrFail($id);
+
+        if ($data['cover']) {
+            $disk = Storage::disk('public');
+            if ($content->cover && $disk->exists($content->cover)) {
+                $disk->delete($content->cover);
+            }
+
+            $data['cover'] = $data['cover']->store('contents', 'public');
+        }
+
+        $content->update($data);
     }
 
     /**
@@ -80,4 +94,3 @@ class ContentController extends Controller
         //
     }
 }
-
